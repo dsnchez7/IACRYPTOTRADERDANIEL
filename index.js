@@ -1,32 +1,40 @@
+// ✅ Archivo: index.js (servidor principal con análisis IA sin imagen por ahora)
+
+const { analizarEntrada } = require('./analizador');
 const express = require('express');
-const puppeteer = require('puppeteer');
+const cors = require('cors');
+const path = require('path');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 app.post('/api/captura', async (req, res) => {
   const { symbol, timeframe } = req.body;
-  const url = `https://www.tradingview.com/chart/?symbol=${symbol.toUpperCase()}&interval=${timeframe}`;
+
+  if (!symbol || !timeframe) {
+    return res.status(400).send('Faltan parámetros requeridos');
+  }
 
   try {
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'networkidle2' });
-    await page.waitForTimeout(5000);
-    const imagePath = `/tmp/${symbol}_${timeframe}.png`;
-    await page.screenshot({ path: imagePath });
-    await browser.close();
+    const analisisTexto = analizarEntrada({ symbol, timeframe });
 
-    res.sendFile(imagePath);
+    res.json({
+      imagen: null,
+      analisis: analisisTexto
+    });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).send('Error al capturar gráfico');
+    console.error('Error en análisis:', error);
+    res.status(500).send('Error al generar análisis');
   }
 });
 
 app.get('/', (req, res) => {
-  res.send('API de captura de gráficos TradingView con Puppeteer');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(port, () => {
