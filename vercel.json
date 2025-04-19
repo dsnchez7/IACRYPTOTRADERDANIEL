@@ -1,0 +1,8 @@
+
+{
+  "version": 2,
+  "builds": [
+    { "src": "pages/index.js", "use": "@vercel/next" },
+    { "src": "api/analizar.js", "use": "@vercel/node" }
+  ]
+}
